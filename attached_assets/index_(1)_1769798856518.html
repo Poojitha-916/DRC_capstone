@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><link rel="stylesheet" href="styles.css"></head>
+<body>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <div style="width:40px;height:40px;background:#fff;display:flex;align-items:center;justify-content:center;border-radius:4px;font-weight:bold;color:#0b6a55;">GITAM</div>
+    </div>
+    <div class="toggle-btn" onclick="toggleSidebar()"></div>
+    <div class="title">G-Scholar Hub</div>
+
+    <div class="role-label" id="roleLabel">(SCHOLAR)</div>
+
+    <div class="profile-menu">
+      <div class="profile-icon" id="profileIcon" tabindex="0"></div>
+      <div class="profile-dropdown" id="profileDropdown" aria-hidden="true">
+        <button data-role="supervisor">Supervisor</button>
+        <button data-role="rac">RAC</button>
+        <button data-role="scholar">Scholar</button>
+        <hr />
+        <button data-role="logout" style="color:#c0392b;">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAYOUT: SIDEBAR + CONTENT -->
+  <div class="layout">
+    <div class="sidebar">
+      <ul id="sidebarMenu">
+        <!-- Dynamic sidebar content will be loaded here -->
+      </ul>
+    </div>
+
+    <div class="content">
+      <div class="replica-box" id="mainContent">
+        <!-- Default content will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FOR APPLICATION DETAILS - FROM SECOND CODE -->
+  <div class="modal-overlay" id="applicationModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Application Details</div>
+        <button class="close-btn" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Modal content will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+
+</body>
+</html>

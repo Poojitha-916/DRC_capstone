@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Outfit:wght@300..700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: 'DM Sans', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+
+  /* Teal Theme - Professional & Academic */
+  --background: 0 0% 98%;      /* Very light gray/white */
+  --foreground: 220 14% 15%;    /* Dark gray text */
+
+  /* Primary: Teal #0b6a55 -> 167 80% 23% */
+  --primary: 167 80% 23%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary: Gold/Yellow #f4b400 -> 45 95% 48% */
+  --secondary: 45 95% 48%;
+  --secondary-foreground: 220 14% 10%;
+
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 10% 45%;
+
+  --accent: 167 30% 94%;
+  --accent-foreground: 167 80% 23%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 167 80% 23%;
+
+  --radius: 0.75rem;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight text-slate-900;
+  }
+}
+
+@layer components {
+  .dashboard-card {
+    @apply bg-white rounded-xl border border-border/50 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20;
+  }
+  
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground;
+  }
+  
+  .nav-item-active {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground shadow-sm;
+  }
+}
