@@ -45,6 +45,33 @@ Preferred communication style: Simple, everyday language.
 
 ---
 
+## Docker (Local Setup)
+
+You can run the app locally using Docker Compose with a Node container for the app and a Postgres container for the database.
+
+### Prerequisites
+- Docker + Docker Compose installed
+
+### Steps
+1. Build and start the services:
+   ```bash
+   docker compose up --build
+   ```
+2. In another terminal, push the database schema:
+   ```bash
+   docker compose exec app npm run db:push
+   ```
+3. Open the app at:
+   ```
+   http://localhost:5000
+   ```
+
+### Notes
+- The Postgres connection is provided via `DATABASE_URL` in `docker-compose.yml`.
+- Demo users are seeded automatically on startup (see the login screen).
+
+---
+
 ## File Documentation
 
 ### Client Files
