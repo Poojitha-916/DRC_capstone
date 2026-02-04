@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: gscholar
+      POSTGRES_PASSWORD: gscholar
+      POSTGRES_DB: gscholar
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://gscholar:gscholar@db:5432/gscholar
+      SESSION_SECRET: gscholar-hub-secret-key-2024
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  db-data:
