@@ -57,7 +57,10 @@ You can run the app locally using Docker Compose with a Node container for the a
    ```bash
    docker compose up --build
    ```
-2. The app container waits for Postgres, pushes the schema, and starts the dev server.
+2. In another terminal, push the database schema:
+   ```bash
+   docker compose exec app npm run db:push
+   ```
 3. Open the app at:
    ```
    http://localhost:5000

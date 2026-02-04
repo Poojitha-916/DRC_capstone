@@ -22,7 +22,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    command: sh -c "node script/wait-for-db.mjs && npm run db:push && npm run dev"
+    command: npm run dev
 
 volumes:
   db-data:
