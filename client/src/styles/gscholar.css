@@ -372,6 +372,179 @@ body {
   color: #333; 
 }
 
+/* PROFILE MODULES */
+.module-card {
+  margin-top: 22px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.module-card:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.module-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9e9e9;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.module-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.module-subtitle {
+  font-size: 13px;
+  color: #566;
+  font-weight: 500;
+}
+
+.module-body {
+  padding: 18px;
+  display: grid;
+  gap: 16px;
+}
+
+.module-split {
+  display: grid;
+  gap: 16px;
+}
+
+.module-block {
+  display: grid;
+  gap: 10px;
+}
+
+.module-block h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #1f3d37;
+}
+
+.module-meta {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: #333;
+}
+
+.module-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.module-table th,
+.module-table td {
+  border: 1px solid #eee;
+  padding: 10px 8px;
+  vertical-align: top;
+  text-align: left;
+}
+
+.module-table th {
+  background: #f1f3f4;
+  font-weight: 600;
+}
+
+.module-table.compact th,
+.module-table.compact td {
+  padding: 8px 10px;
+}
+
+.doc-link {
+  color: #0b6a55;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.doc-link:hover {
+  text-decoration: underline;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e0f2f1;
+  color: #0b6a55;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #eef2f7;
+  color: #2c3e50;
+  text-transform: capitalize;
+}
+
+.status-pill.success,
+.status-pill.satisfactory {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.status-pill.pending {
+  background: #fff4e5;
+  color: #b45309;
+}
+
+.status-pill.reviewed {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.status-pill.submitted {
+  background: #e0f2f1;
+  color: #0b6a55;
+}
+
+.status-pill.absent {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-pill.failed,
+.status-pill.rejected,
+.status-pill.unsatisfactory {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-pill.muted {
+  background: #f1f5f9;
+  color: #6b7280;
+}
+
+.state-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 12px;
+}
+
 /* APPLICATIONS STYLES */
 .applications-container { 
   padding: 8px; 
