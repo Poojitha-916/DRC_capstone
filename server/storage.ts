@@ -29,12 +29,15 @@ export interface IStorage {
   getApplications(scholarId?: number): Promise<Application[]>;
   getApplicationById(id: number): Promise<Application | undefined>;
   getApplicationsByStage(stage: string): Promise<Application[]>;
+  getApplicationsForSupervisor(supervisorId: number): Promise<Application[]>;
   createApplication(app: InsertApplication): Promise<Application>;
   updateApplication(id: number, updates: Partial<InsertApplication>): Promise<Application>;
   
   // Application Reviews
   getReviewsForApplication(applicationId: number): Promise<ApplicationReview[]>;
   createReview(review: InsertApplicationReview): Promise<ApplicationReview>;
+  isSupervisorForScholar(supervisorId: number, scholarId: number): Promise<boolean>;
+  createScholarSupervisor(scholarId: number, supervisorId: number): Promise<void>;
   
   // Stats
   getResearchProgress(scholarId: number): Promise<typeof researchProgress.$inferSelect | undefined>;
@@ -94,6 +97,26 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(applications.submissionDate));
   }
 
+  async getApplicationsForSupervisor(supervisorId: number): Promise<Application[]> {
+    const results = await db
+      .select()
+      .from(applications)
+      .innerJoin(
+        scholarSupervisors,
+        eq(scholarSupervisors.scholarId, applications.scholarId),
+      )
+      .where(
+        and(
+          eq(applications.currentStage, "supervisor"),
+          eq(applications.status, "Pending"),
+          eq(scholarSupervisors.supervisorId, supervisorId),
+        ),
+      )
+      .orderBy(desc(applications.submissionDate));
+
+    return results.map((result) => result.applications);
+  }
+
   async createApplication(app: InsertApplication): Promise<Application> {
     const [newApp] = await db.insert(applications).values(app).returning();
     return newApp;
@@ -113,6 +136,28 @@ export class DatabaseStorage implements IStorage {
   async createReview(review: InsertApplicationReview): Promise<ApplicationReview> {
     const [newReview] = await db.insert(applicationReviews).values(review).returning();
     return newReview;
+  }
+
+  async isSupervisorForScholar(supervisorId: number, scholarId: number): Promise<boolean> {
+    const [assignment] = await db
+      .select()
+      .from(scholarSupervisors)
+      .where(
+        and(
+          eq(scholarSupervisors.supervisorId, supervisorId),
+          eq(scholarSupervisors.scholarId, scholarId),
+        ),
+      );
+
+    return Boolean(assignment);
+  }
+
+  async createScholarSupervisor(scholarId: number, supervisorId: number): Promise<void> {
+    await db.insert(scholarSupervisors).values({
+      scholarId,
+      supervisorId,
+      isPrimary: true,
+    });
   }
 
   async getResearchProgress(scholarId: number): Promise<typeof researchProgress.$inferSelect | undefined> {

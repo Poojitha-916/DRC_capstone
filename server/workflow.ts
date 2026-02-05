@@ -1,4 +1,4 @@
-export type WorkflowStage = "drc" | "irc" | "doaa" | "completed";
+export type WorkflowStage = "supervisor" | "drc" | "irc" | "doaa" | "completed";
 export type WorkflowDecision = "approved" | "rejected";
 
 export interface WorkflowDefinition {
@@ -22,8 +22,9 @@ export interface WorkflowEvaluationResult {
 
 const baseWorkflow: WorkflowDefinition = {
   id: "phd-approval",
-  stages: ["drc", "irc", "doaa", "completed"],
+  stages: ["supervisor", "drc", "irc", "doaa", "completed"],
   stageRoles: {
+    supervisor: ["supervisor"],
     drc: ["drc"],
     irc: ["irc"],
     doaa: ["doaa"],
