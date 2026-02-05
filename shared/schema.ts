@@ -77,7 +77,7 @@ export const applications = pgTable("applications", {
   scholarId: integer("scholar_id").notNull(),
   type: text("type").notNull(), // 'Extension', 'Re-Registration', 'Supervisor Change', 'Pre-Talk', 'Thesis Submission', etc.
   status: text("status").notNull().default("Pending"), // 'Pending', 'Approved', 'Rejected'
-  currentStage: text("current_stage").notNull().default("drc"), // 'drc', 'irc', 'doaa', 'completed'
+  currentStage: text("current_stage").notNull().default("supervisor"), // 'supervisor', 'drc', 'irc', 'doaa', 'completed'
   submissionDate: timestamp("submission_date").defaultNow(),
   details: jsonb("details"), // Store extra form fields here
   finalOutcome: text("final_outcome"), // 'Approved', 'Rejected', null if still in progress

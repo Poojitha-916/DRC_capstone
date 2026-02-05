@@ -721,7 +721,7 @@ function ScholarApplications({ user }: { user: User }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
-      alert("Application submitted successfully! It will be reviewed by the DRC.");
+      alert("Application submitted successfully! It will be reviewed by the Supervisor.");
       setView("options");
       setFormType(null);
     }
@@ -731,6 +731,7 @@ function ScholarApplications({ user }: { user: User }) {
     if (status === "Rejected") return { percent: 100, label: "Rejected", color: "#e74c3c" };
     if (status === "Approved") return { percent: 100, label: "Approved", color: "#27ae60" };
     switch (stage) {
+      case "supervisor": return { percent: 10, label: "With Supervisor", color: "#2c7a7b" };
       case "drc": return { percent: 25, label: "At DRC", color: "#3498db" };
       case "irc": return { percent: 50, label: "At IRC", color: "#f39c12" };
       case "doaa": return { percent: 75, label: "At DoAA", color: "#9b59b6" };
@@ -829,7 +830,7 @@ function ApplicationDetailModal({ app, onClose }: { app: Application; onClose: (
     queryFn: () => fetch(`/api/applications/${app.id}/reviews`).then(res => res.json())
   });
 
-  const stages = ["drc", "irc", "doaa", "completed"];
+  const stages = ["supervisor", "drc", "irc", "doaa", "completed"];
   const currentIndex = stages.indexOf(app.currentStage);
 
   return (
@@ -841,7 +842,7 @@ function ApplicationDetailModal({ app, onClose }: { app: Application; onClose: (
         </div>
         <div className="modal-body">
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "30px", padding: "20px", background: "#f8f9fa", borderRadius: "8px" }}>
-            {["DRC", "IRC", "DoAA", "Complete"].map((label, idx) => {
+            {["Supervisor", "DRC", "IRC", "DoAA", "Complete"].map((label, idx) => {
               const stageKey = stages[idx];
               const review = reviews.find(r => r.stage === stageKey);
               const isPast = idx < currentIndex || app.status === "Approved";

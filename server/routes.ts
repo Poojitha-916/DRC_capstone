@@ -112,7 +112,25 @@ export async function registerRoutes(
   });
 
   app.get("/api/applications/stage/:stage", async (req, res) => {
-    const apps = await storage.getApplicationsByStage(req.params.stage);
+    const stage = req.params.stage;
+
+    if (stage === "supervisor") {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      if (user.role === "supervisor") {
+        const apps = await storage.getApplicationsForSupervisor(user.id);
+        return res.json(apps);
+      }
+    }
+
+    const apps = await storage.getApplicationsByStage(stage);
     res.json(apps);
   });
 
@@ -129,7 +147,7 @@ export async function registerRoutes(
       const input = api.applications.create.input.parse(req.body);
       const newApp = await storage.createApplication({
         ...input,
-        currentStage: "drc",
+        currentStage: "supervisor",
         status: "Pending",
       });
       res.status(201).json(newApp);
@@ -185,6 +203,19 @@ export async function registerRoutes(
         return res
           .status(403)
           .json({ message: "Reviewer not authorized for this stage" });
+      }
+
+      if (currentStage === "supervisor" && reviewer.role === "supervisor") {
+        const isAssigned = await storage.isSupervisorForScholar(
+          reviewer.id,
+          application.scholarId,
+        );
+
+        if (!isAssigned) {
+          return res.status(403).json({
+            message: "Supervisor not assigned to this scholar",
+          });
+        }
       }
 
       const review = await storage.createReview({
@@ -290,7 +321,7 @@ async function seedData() {
 
 
     // Create Supervisor
-    await storage.createUser({
+    const supervisor = await storage.createUser({
       username: "supervisor1",
       password: "password123",
       role: "supervisor",
@@ -329,12 +360,15 @@ async function seedData() {
       phone: "9876543260",
     });
 
+    await storage.createScholarSupervisor(scholar1.id, supervisor.id);
+    await storage.createScholarSupervisor(scholar2User.id, supervisor.id);
+
     // Add sample application for scholar1
     await storage.createApplication({
       scholarId: scholar1.id, // Uses scholar user ID as reference
       type: "Extension",
       status: "Pending",
-      currentStage: "drc",
+      currentStage: "supervisor",
       details: {
         candidateName: "Thirupathi Kumar",
         registrationDate: "15-08-2020",
