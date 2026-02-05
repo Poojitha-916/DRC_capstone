@@ -7,6 +7,7 @@ import {
   applications, 
   researchProgress, 
   applicationReviews,
+  type Scholar,
   type User, 
   type InsertUser, 
   type Application, 
@@ -20,7 +21,11 @@ import bcrypt from "bcryptjs";
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
+  getUserWithScholar(id: number): Promise<(User & Partial<Scholar>) | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserWithScholarByUsername(
+    username: string,
+  ): Promise<(User & Partial<Scholar>) | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<InsertUser>): Promise<User>;
@@ -38,6 +43,9 @@ export interface IStorage {
   createReview(review: InsertApplicationReview): Promise<ApplicationReview>;
   isSupervisorForScholar(supervisorId: number, scholarId: number): Promise<boolean>;
   createScholarSupervisor(scholarId: number, supervisorId: number): Promise<void>;
+  createScholarProfile(
+    profile: typeof scholars.$inferInsert,
+  ): Promise<typeof scholars.$inferSelect>;
   
   // Stats
   getResearchProgress(scholarId: number): Promise<typeof researchProgress.$inferSelect | undefined>;
@@ -50,9 +58,43 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserWithScholar(
+    id: number,
+  ): Promise<(User & Partial<Scholar>) | undefined> {
+    const [record] = await db
+      .select()
+      .from(users)
+      .leftJoin(scholars, eq(scholars.userId, users.id))
+      .where(eq(users.id, id));
+
+    if (!record) {
+      return undefined;
+    }
+
+    const { id: _scholarRecordId, ...scholarData } = record.scholars ?? {};
+    return { ...scholarData, ...record.users };
+  }
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
+  }
+
+  async getUserWithScholarByUsername(
+    username: string,
+  ): Promise<(User & Partial<Scholar>) | undefined> {
+    const [record] = await db
+      .select()
+      .from(users)
+      .leftJoin(scholars, eq(scholars.userId, users.id))
+      .where(eq(users.username, username));
+
+    if (!record) {
+      return undefined;
+    }
+
+    const { id: _scholarRecordId, ...scholarData } = record.scholars ?? {};
+    return { ...scholarData, ...record.users };
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -158,6 +200,13 @@ export class DatabaseStorage implements IStorage {
       supervisorId,
       isPrimary: true,
     });
+  }
+
+  async createScholarProfile(
+    profile: typeof scholars.$inferInsert,
+  ): Promise<typeof scholars.$inferSelect> {
+    const [newProfile] = await db.insert(scholars).values(profile).returning();
+    return newProfile;
   }
 
   async getResearchProgress(scholarId: number): Promise<typeof researchProgress.$inferSelect | undefined> {

@@ -122,6 +122,7 @@ export const insertNoticeSchema = createInsertSchema(notices);
 
 // === TYPES ===
 export type User = typeof users.$inferSelect;
+export type Scholar = typeof scholars.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;

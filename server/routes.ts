@@ -25,7 +25,7 @@ export async function registerRoutes(
         })
         .parse(req.body);
 
-      const user = await storage.getUserByUsername(username);
+      const user = await storage.getUserWithScholarByUsername(username);
       if (!user) {
         return res
           .status(401)
@@ -60,7 +60,7 @@ export async function registerRoutes(
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    const user = await storage.getUser(req.session.userId);
+    const user = await storage.getUserWithScholar(req.session.userId);
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
@@ -70,7 +70,7 @@ export async function registerRoutes(
 
   // === USERS ===
   app.get(api.users.get.path, async (req, res) => {
-    const user = await storage.getUser(Number(req.params.id));
+    const user = await storage.getUserWithScholar(Number(req.params.id));
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -305,9 +305,28 @@ async function seedData() {
       phone: "9876543210",
     });
 
-    // Create Scholar 1 profile
-    // NOTE: Scholar data is now stored separately in scholars table
-    // This would be created via a createScholar method in storage
+    await storage.createScholarProfile({
+      userId: scholar1.id,
+      scholarId: "GITAM-SCH-2020-118",
+      batch: "June 2022",
+      status: "Active",
+      department: "Computer Science",
+      researchArea: "Applied Machine Learning",
+      researchTitle: "Context-Aware Diagnosis for Healthcare Records",
+      joiningDate: "2020-08-15",
+      phase: "Phase I",
+      programme: "Full Time",
+      location: "Visakhapatnam",
+      fatherName: "Ramakrishna Kumar",
+      parentMobile: "9876500011",
+      aadhaar: "1234-5678-9012",
+      nationality: "Indian",
+      address: "D.No. 9-14, MVP Colony, Visakhapatnam",
+      tenthBoard: "CBSE",
+      tenthPercentage: "92%",
+      interBoard: "State Board",
+      interPercentage: "89%",
+    });
     
     // Create Scholar 2
     const scholar2User = await storage.createUser({
@@ -317,6 +336,29 @@ async function seedData() {
       name: "Priya Reddy",
       email: "priya.reddy@gitam.in",
       phone: "9876543220",
+    });
+
+    await storage.createScholarProfile({
+      userId: scholar2User.id,
+      scholarId: "GITAM-SCH-2021-204",
+      batch: "June 2023",
+      status: "Active",
+      department: "Biotechnology",
+      researchArea: "Molecular Biology",
+      researchTitle: "RNA Signatures in Pediatric Care",
+      joiningDate: "2021-07-21",
+      phase: "Phase II",
+      programme: "Full Time",
+      location: "Hyderabad",
+      fatherName: "Prabhakar Reddy",
+      parentMobile: "9876500022",
+      aadhaar: "2345-6789-0123",
+      nationality: "Indian",
+      address: "Plot 12, Jubilee Hills, Hyderabad",
+      tenthBoard: "ICSE",
+      tenthPercentage: "91%",
+      interBoard: "State Board",
+      interPercentage: "88%",
     });
 
 
