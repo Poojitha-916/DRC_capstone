@@ -3,6 +3,12 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "../shared/routes.js";
 import { z } from "zod";
+import {
+  evaluateWorkflowDecision,
+  getWorkflowDefinition,
+  isRoleAuthorized,
+  type WorkflowStage,
+} from "./workflow";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -155,6 +161,24 @@ export async function registerRoutes(
           .json({ message: "Application is no longer pending" });
       }
 
+      const reviewer = await storage.getUser(reviewInput.reviewerId);
+      if (!reviewer) {
+        return res.status(404).json({ message: "Reviewer not found" });
+      }
+
+      const workflow = getWorkflowDefinition(application.type);
+      const currentStage = application.currentStage as WorkflowStage;
+
+      if (!workflow.stages.includes(currentStage)) {
+        return res.status(400).json({ message: "Invalid workflow stage" });
+      }
+
+      if (!isRoleAuthorized(workflow, currentStage, reviewer.role)) {
+        return res
+          .status(403)
+          .json({ message: "Reviewer not authorized for this stage" });
+      }
+
       const review = await storage.createReview({
         applicationId,
         reviewerId: reviewInput.reviewerId,
@@ -163,34 +187,19 @@ export async function registerRoutes(
         remarks: reviewInput.remarks,
       });
 
-      let nextStage = application.currentStage;
-      let newStatus = application.status;
-      let finalOutcome = application.finalOutcome;
+      const workflowResult = evaluateWorkflowDecision(workflow, {
+        currentStage,
+        decision: reviewInput.decision,
+      });
 
-      if (reviewInput.decision === "rejected") {
-        newStatus = "Rejected";
-        finalOutcome = "Rejected";
-      } else {
-        const stageOrder = ["drc", "irc", "doaa", "completed"];
-        const currentIndex = stageOrder.indexOf(application.currentStage);
-
-        if (currentIndex < stageOrder.length - 1) {
-          nextStage = stageOrder[currentIndex + 1];
-        }
-
-        if (nextStage === "completed") {
-          newStatus = "Approved";
-          finalOutcome = "Approved";
-
-          // Apply approved changes to scholar profile
-          await applyApprovedChanges(application);
-        }
+      if (workflowResult.isTerminal && workflowResult.finalOutcome === "Approved") {
+        await applyApprovedChanges(application);
       }
 
       const updatedApp = await storage.updateApplication(applicationId, {
-        currentStage: nextStage,
-        status: newStatus,
-        finalOutcome,
+        currentStage: workflowResult.nextStage,
+        status: workflowResult.status,
+        finalOutcome: workflowResult.finalOutcome,
       });
 
       res.json({ review, application: updatedApp });
