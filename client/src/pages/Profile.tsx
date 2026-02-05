@@ -26,8 +26,8 @@ export default function Profile() {
             
             {isLoading ? (
               <ProfileSkeleton />
-            ) : user ? (
-              <ProfileCard user={user} />
+            ) : user && 'id' in user && user.id ? (
+              <ProfileCard user={user as any} />
             ) : (
               <div>User not found</div>
             )}

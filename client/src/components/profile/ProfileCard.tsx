@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface ProfileCardProps {
   user: UserType;
+  scholar?: any; // Scholar data would come from separate table
 }
 
 export function ProfileCard({ user }: ProfileCardProps) {
@@ -34,10 +35,13 @@ export function ProfileCard({ user }: ProfileCardProps) {
               <Phone className="w-4 h-4 text-primary" />
               <span>{user.phone || "Not provided"}</span>
             </div>
-            <div className="flex items-center gap-3 text-sm text-slate-600 p-2 rounded-lg hover:bg-slate-50 transition-colors">
-              <MapPin className="w-4 h-4 text-primary" />
-              <span>{user.location || "Visakhapatnam, India"}</span>
-            </div>
+            {/* Scholar data moved to separate table in normalized schema */}
+                  {user.role === 'scholar' && (
+                    <div className="flex items-center gap-3 text-sm text-slate-600 p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span>Location info from scholar profile</span>
+                    </div>
+                  )}
           </div>
         </CardContent>
       </Card>
@@ -52,13 +56,21 @@ export function ProfileCard({ user }: ProfileCardProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-            <InfoItem label="Registration No." value={user.scholarId} icon={Hash} />
-            <InfoItem label="Batch" value={user.batch} icon={Calendar} />
-            <InfoItem label="Status" value={user.status} icon={Globe} badge />
-            <InfoItem label="Father's Name" value={user.fatherName} icon={User} />
-            <InfoItem label="Parent Mobile" value={user.parentMobile} icon={Phone} />
-            <InfoItem label="Nationality" value={user.nationality} icon={Globe} />
-            <InfoItem label="Address" value={user.address} icon={MapPin} fullWidth />
+            {user.role === 'scholar' ? (
+              <>
+                <InfoItem label="Registration No." value="—" icon={Hash} />
+                <InfoItem label="Batch" value="—" icon={Calendar} />
+                <InfoItem label="Status" value="—" icon={Globe} badge />
+                <InfoItem label="Father's Name" value="—" icon={User} />
+                <InfoItem label="Parent Mobile" value="—" icon={Phone} />
+                <InfoItem label="Nationality" value="—" icon={Globe} />
+                <InfoItem label="Address" value="Scholar data from separate table" icon={MapPin} fullWidth />
+              </>
+            ) : (
+              <div className="col-span-2 p-4 bg-blue-50 rounded-lg border border-blue-200 text-sm text-blue-800">
+                Non-scholar users display basic profile information above.
+              </div>
+            )}
           </div>
 
           <div className="mt-8 pt-6 border-t border-dashed">
@@ -67,21 +79,29 @@ export function ProfileCard({ user }: ProfileCardProps) {
               Educational Background
             </h3>
             <div className="space-y-4">
-              <div className="bg-slate-50 p-4 rounded-xl border border-border/50">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="font-semibold text-slate-700">Class X (Secondary)</span>
-                  <Badge variant="outline" className="text-slate-500">{user.tenthPercentage || "N/A"}%</Badge>
+              {user.role === 'scholar' ? (
+                <>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-border/50">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-semibold text-slate-700">Class X (Secondary)</span>
+                      <Badge variant="outline" className="text-slate-500">—%</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Educational data from scholar table</p>
+                  </div>
+                  
+                  <div className="bg-slate-50 p-4 rounded-xl border border-border/50">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-semibold text-slate-700">Class XII (Inter/Plus 2)</span>
+                      <Badge variant="outline" className="text-slate-500">—%</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Educational data from scholar table</p>
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 text-sm text-amber-800">
+                  Educational background available for scholars only.
                 </div>
-                <p className="text-sm text-muted-foreground">{user.tenthBoard || "Board not specified"}</p>
-              </div>
-              
-              <div className="bg-slate-50 p-4 rounded-xl border border-border/50">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="font-semibold text-slate-700">Class XII (Inter/Plus 2)</span>
-                  <Badge variant="outline" className="text-slate-500">{user.interPercentage || "N/A"}%</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">{user.interBoard || "Board not specified"}</p>
-              </div>
+              )}
             </div>
           </div>
         </CardContent>

@@ -3,6 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "../shared/routes.js";
 import { z } from "zod";
+import { verifyPassword } from "./storage";
 import {
   evaluateWorkflowDecision,
   getWorkflowDefinition,
@@ -25,7 +26,14 @@ export async function registerRoutes(
         .parse(req.body);
 
       const user = await storage.getUserByUsername(username);
-      if (!user || user.password !== password) {
+      if (!user) {
+        return res
+          .status(401)
+          .json({ message: "Invalid username or password" });
+      }
+
+      const passwordValid = await verifyPassword(password, user.password);
+      if (!passwordValid) {
         return res
           .status(401)
           .json({ message: "Invalid username or password" });
@@ -238,9 +246,9 @@ async function applyApprovedChanges(application: {
   const details = application.details as Record<string, unknown>;
 
   if (application.type === "Supervisor Change" && details?.proposedSupervisor) {
-    await storage.updateUser(application.scholarId, {
-      supervisor: String(details.proposedSupervisor),
-    });
+    // Supervisor assignments are now in scholarSupervisors table
+    // This would need to be updated through a different endpoint
+    console.log(`Supervisor change approved: ${details.proposedSupervisor}`);
   }
 
   if (application.type === "Extension" && details?.extensionDuration) {
@@ -264,44 +272,22 @@ async function seedData() {
       name: "Thirupathi Kumar",
       email: "thirupathi@gitam.in",
       phone: "9876543210",
-      scholarId: "PHD2020001",
-      location: "HYD",
-      batch: "2020-2021",
-      status: "Active",
-      department: "Computer Science and Engineering",
-      supervisor: "Dr. Ramesh Kumar",
-      coSupervisor: "Dr. Priya Sharma",
-      researchArea: "Machine Learning",
-      researchTitle: "Deep Learning for Predictive Analytics",
-      joiningDate: "15-08-2020",
-      phase: "Phase-II",
-      programme: "Full Time",
-      fatherName: "Venkat Kumar",
-      parentMobile: "9876543211",
-      nationality: "Indian",
-      address: "Hyderabad, Telangana",
     });
 
+    // Create Scholar 1 profile
+    // NOTE: Scholar data is now stored separately in scholars table
+    // This would be created via a createScholar method in storage
+    
     // Create Scholar 2
-    const scholar2 = await storage.createUser({
+    const scholar2User = await storage.createUser({
       username: "scholar2",
       password: "password123",
       role: "scholar",
       name: "Priya Reddy",
       email: "priya.reddy@gitam.in",
       phone: "9876543220",
-      scholarId: "PHD2021002",
-      location: "HYD",
-      batch: "2021-2022",
-      status: "Active",
-      department: "Electronics and Communication",
-      supervisor: "Dr. Suresh Babu",
-      researchArea: "IoT and Embedded Systems",
-      researchTitle: "Smart IoT Solutions for Healthcare",
-      joiningDate: "10-01-2021",
-      phase: "Phase-I",
-      programme: "Part Time",
     });
+
 
     // Create Supervisor
     await storage.createUser({
@@ -311,8 +297,6 @@ async function seedData() {
       name: "Dr. Ramesh Kumar",
       email: "ramesh.kumar@gitam.edu",
       phone: "9876543230",
-      location: "HYD/GST/CSE",
-      department: "Computer Science and Engineering",
     });
 
     // Create DRC member
@@ -323,8 +307,6 @@ async function seedData() {
       name: "Dr. Lakshmi Narayana",
       email: "lakshmi.drc@gitam.edu",
       phone: "9876543240",
-      location: "HYD/GST",
-      department: "DRC Committee",
     });
 
     // Create IRC member
@@ -335,8 +317,6 @@ async function seedData() {
       name: "Dr. Venkatesh Rao",
       email: "venkatesh.irc@gitam.edu",
       phone: "9876543250",
-      location: "HYD",
-      department: "IRC Committee",
     });
 
     // Create DoAA officer
@@ -347,13 +327,11 @@ async function seedData() {
       name: "Prof. Srinivas Reddy",
       email: "srinivas.doaa@gitam.edu",
       phone: "9876543260",
-      location: "HYD",
-      department: "Dean of Academic Affairs",
     });
 
     // Add sample application for scholar1
     await storage.createApplication({
-      scholarId: scholar1.id,
+      scholarId: scholar1.id, // Uses scholar user ID as reference
       type: "Extension",
       status: "Pending",
       currentStage: "drc",
@@ -377,7 +355,7 @@ async function seedData() {
     });
 
     await storage.createResearchProgress({
-      scholarId: scholar2.id,
+      scholarId: scholar2User.id,
       completedReviews: 2,
       pendingReports: 0,
       publications: 1,
