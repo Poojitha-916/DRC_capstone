@@ -2,29 +2,36 @@ import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// === USERS / PROFILES ===
+// === USERS / BASE ===
+// Core user table - minimal fields, passwords MUST be hashed
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull().default("password123"),
-  role: text("role").notNull().default("scholar"), // 'scholar', 'supervisor', 'drc', 'irc', 'doaa', 'admin'
+  password: text("password").notNull(), // HASHED password using bcryptjs
+  role: text("role").notNull(), // 'scholar', 'supervisor', 'drc', 'irc', 'doaa', 'admin'
   name: text("name").notNull(),
-  email: text("email").notNull(),
+  email: text("email").notNull().unique(),
   phone: text("phone"),
-  
-  // Specific fields for Scholars
-  scholarId: text("scholar_id"),
-  location: text("location"),
+  avatarUrl: text("avatar_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// === SCHOLARS ===
+// Scholar-specific data - separated from users
+export const scholars = pgTable("scholars", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  scholarId: text("scholar_id").unique(),
   batch: text("batch"),
-  status: text("status").default("Active"),
+  status: text("status").default("Active"), // Active, Inactive, Graduated
   department: text("department"),
-  supervisor: text("supervisor"),
-  coSupervisor: text("co_supervisor"),
   researchArea: text("research_area"),
   researchTitle: text("research_title"),
   joiningDate: text("joining_date"),
-  phase: text("phase"),
-  programme: text("programme"),
+  phase: text("phase"), // Phase-I, Phase-II, Phase-III
+  programme: text("programme"), // Full Time, Part Time
+  location: text("location"),
   
   // Personal Details
   fatherName: text("father_name"),
@@ -38,10 +45,31 @@ export const users = pgTable("users", {
   tenthPercentage: text("tenth_percentage"),
   interBoard: text("inter_board"),
   interPercentage: text("inter_percentage"),
-
-  // Metadata
-  avatarUrl: text("avatar_url"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// === SUPERVISOR ASSIGNMENTS ===
+export const scholarSupervisors = pgTable("scholar_supervisors", {
+  id: serial("id").primaryKey(),
+  scholarId: integer("scholar_id").notNull(),
+  supervisorId: integer("supervisor_id").notNull(),
+  isPrimary: boolean("is_primary").default(true),
+  assignedOn: timestamp("assigned_on").defaultNow(),
+});
+
+// === RAC MEMBERS ===
+// DRC, IRC, DoAA members assigned to scholars
+export const racMembers = pgTable("rac_members", {
+  id: serial("id").primaryKey(),
+  scholarId: integer("scholar_id").notNull(),
+  userId: integer("user_id").notNull(), // Reference to users table
+  memberRole: text("member_role").notNull(), // 'drc', 'irc', 'doaa'
+  assignedOn: timestamp("assigned_on").defaultNow(),
+});
+
+
 
 // === APPLICATIONS ===
 export const applications = pgTable("applications", {
@@ -100,3 +128,5 @@ export type InsertApplication = z.infer<typeof insertApplicationSchema>;
 export type ApplicationReview = typeof applicationReviews.$inferSelect;
 export type InsertApplicationReview = z.infer<typeof insertApplicationReviewSchema>;
 export type Notice = typeof notices.$inferSelect;
+export type InsertNotice = z.infer<typeof insertNoticeSchema>;
+export type ResearchProgress = typeof researchProgress.$inferSelect;

@@ -74,13 +74,13 @@ export function Sidebar({ className }: SidebarProps) {
                 className={cn(
                   "nav-item cursor-pointer group",
                   isActive && "nav-item-active",
-                  item.highlight && !isActive && "text-red-500 hover:text-red-600 hover:bg-red-50"
+                  ('highlight' in item) && item.highlight && !isActive && "text-red-500 hover:text-red-600 hover:bg-red-50"
                 )}
               >
                 <item.icon
                   className={cn(
                     "w-5 h-5",
-                    isActive ? "text-white" : item.highlight ? "text-red-500" : "text-slate-400 group-hover:text-primary"
+                    isActive ? "text-white" : ('highlight' in item) && item.highlight ? "text-red-500" : "text-slate-400 group-hover:text-primary"
                   )}
                 />
                 <span>{item.label}</span>

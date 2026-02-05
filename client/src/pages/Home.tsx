@@ -373,7 +373,6 @@ function ScholarProfile({ user }: { user: User }) {
       <div className="profile-card">
         <div className="avatar-col">
           <div className="avatar-placeholder"></div>
-          <span className="change-photo">Change Photo</span>
         </div>
         <div className="details-col">
           <table className="info-table">
@@ -393,7 +392,7 @@ function ScholarProfile({ user }: { user: User }) {
         </div>
       </div>
       <div className="personal-card">
-        <div className="personal-header"><h3>Personal Details</h3><button className="edit-btn" data-testid="button-edit-profile">Edit</button></div>
+        <div className="personal-header"><h3>Personal Details</h3></div>
         <div className="personal-grid">
           <div className="pd-row">
             <span className="pd-label">Name</span><span className="pd-value">{displayUser.name}</span>

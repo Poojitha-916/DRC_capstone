@@ -1,6 +1,9 @@
 import { db } from "./db";
 import { 
   users, 
+  scholars,
+  scholarSupervisors,
+  racMembers,
   applications, 
   researchProgress, 
   applicationReviews,
@@ -12,6 +15,7 @@ import {
   type InsertApplicationReview
 } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   // Users
@@ -53,12 +57,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [newUser] = await db.insert(users).values(user).returning();
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(user.password || "password123", 10);
+    const [newUser] = await db.insert(users).values({
+      ...user,
+      password: hashedPassword
+    }).returning();
     return newUser;
   }
 
   async updateUser(id: number, updates: Partial<InsertUser>): Promise<User> {
-    const [updatedUser] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    // Hash password if being updated
+    const updateData = { ...updates };
+    if (updates.password) {
+      updateData.password = await bcrypt.hash(updates.password, 10);
+    }
+    const [updatedUser] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
     return updatedUser;
   }
 
@@ -113,3 +127,8 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
+
+// Helper function to verify password
+export async function verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+  return bcrypt.compare(plainPassword, hashedPassword);
+}

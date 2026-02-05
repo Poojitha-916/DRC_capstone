@@ -13,12 +13,10 @@ services:
   app:
     build: .
     environment:
-      DATABASE_URL: postgresql://gscholar:gscholar@db:5432/gscholar
+      DATABASE_URL: postgres://avnadmin:AVNS_rS7PrxTF3ZigYE2NWYg@drcpg-311b7b85-drc123.g.aivencloud.com:20040/defaultdb?sslmode=require
       SESSION_SECRET: gscholar-hub-secret-key-2024
     ports:
       - "5000:5000"
-    depends_on:
-      - db
     volumes:
       - .:/app
       - /app/node_modules
