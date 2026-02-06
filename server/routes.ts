@@ -74,6 +74,57 @@ export async function registerRoutes(
     });
   });
 
+  app.post("/api/auth/impersonate", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const adminUser = await storage.getUser(req.session.userId);
+    if (!adminUser || adminUser.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const input = z
+        .object({
+          userId: z.number(),
+        })
+        .parse(req.body);
+
+      const targetUser = await storage.getUser(input.userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!req.session.adminUserId) {
+        req.session.adminUserId = adminUser.id;
+      }
+      req.session.userId = targetUser.id;
+
+      const { password: _, ...userWithoutPassword } = targetUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid input" });
+    }
+  });
+
+  app.post("/api/auth/impersonate/stop", async (req, res) => {
+    if (!req.session.adminUserId) {
+      return res.status(400).json({ message: "Not impersonating" });
+    }
+
+    const adminUser = await storage.getUser(req.session.adminUserId);
+    if (!adminUser) {
+      return res.status(404).json({ message: "Admin user not found" });
+    }
+
+    req.session.userId = adminUser.id;
+    delete req.session.adminUserId;
+
+    const { password: _, ...userWithoutPassword } = adminUser;
+    res.json(userWithoutPassword);
+  });
+
   app.get("/api/auth/me", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
