@@ -6,7 +6,6 @@ import { z } from "zod";
 // Core user table - minimal fields, passwords MUST be hashed
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
   password: text("password").notNull(), // HASHED password using bcryptjs
   role: text("role").notNull(), // 'scholar', 'supervisor', 'drc', 'irc', 'doaa', 'admin'
   name: text("name").notNull(),
@@ -17,12 +16,22 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// === EMPLOYEES ===
+// Employee-specific data (supervisors, DRC, IRC, DoAA members)
+export const employees = pgTable("employees", {
+  employeeId: text("employee_id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  designation: text("designation"), // Professor, Associate Professor, etc.
+  department: text("department"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // === SCHOLARS ===
 // Scholar-specific data - separated from users
 export const scholars = pgTable("scholars", {
-  id: serial("id").primaryKey(),
+  scholarId: text("scholar_id").primaryKey(),
   userId: integer("user_id").notNull().unique(),
-  scholarId: text("scholar_id").unique(),
   batch: text("batch"),
   status: text("status").default("Active"), // Active, Inactive, Graduated
   department: text("department"),
@@ -32,6 +41,10 @@ export const scholars = pgTable("scholars", {
   phase: text("phase"), // Phase-I, Phase-II, Phase-III
   programme: text("programme"), // Full Time, Part Time
   location: text("location"),
+  
+  // Supervisor assignments
+  supervisorId: text("supervisor_id"), // Primary supervisor (employee_id)
+  coSupervisorId: text("co_supervisor_id"), // Co-supervisor (employee_id)
   
   // Personal Details
   fatherName: text("father_name"),
@@ -50,21 +63,12 @@ export const scholars = pgTable("scholars", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// === SUPERVISOR ASSIGNMENTS ===
-export const scholarSupervisors = pgTable("scholar_supervisors", {
-  id: serial("id").primaryKey(),
-  scholarId: integer("scholar_id").notNull(),
-  supervisorId: integer("supervisor_id").notNull(),
-  isPrimary: boolean("is_primary").default(true),
-  assignedOn: timestamp("assigned_on").defaultNow(),
-});
-
 // === RAC MEMBERS ===
-// DRC, IRC, DoAA members assigned to scholars
+// DRC, IRC, DoAA members assigned to scholars (exactly 2 members per scholar)
 export const racMembers = pgTable("rac_members", {
   id: serial("id").primaryKey(),
-  scholarId: integer("scholar_id").notNull(),
-  userId: integer("user_id").notNull(), // Reference to users table
+  scholarId: text("scholar_id").notNull(),
+  employeeId: text("employee_id").notNull(), // Reference to employees table
   memberRole: text("member_role").notNull(), // 'drc', 'irc', 'doaa'
   assignedOn: timestamp("assigned_on").defaultNow(),
 });
@@ -74,7 +78,7 @@ export const racMembers = pgTable("rac_members", {
 // === APPLICATIONS ===
 export const applications = pgTable("applications", {
   id: serial("id").primaryKey(),
-  scholarId: integer("scholar_id").notNull(),
+  scholarId: text("scholar_id").notNull(),
   type: text("type").notNull(), // 'Extension', 'Re-Registration', 'Supervisor Change', 'Pre-Talk', 'Thesis Submission', etc.
   status: text("status").notNull().default("Pending"), // 'Pending', 'Approved', 'Rejected'
   currentStage: text("current_stage").notNull().default("supervisor"), // 'supervisor', 'drc', 'irc', 'doaa', 'completed'
@@ -88,7 +92,7 @@ export const applications = pgTable("applications", {
 export const applicationReviews = pgTable("application_reviews", {
   id: serial("id").primaryKey(),
   applicationId: integer("application_id").notNull(),
-  reviewerId: integer("reviewer_id").notNull(),
+  reviewerId: text("reviewer_id").notNull(),
   stage: text("stage").notNull(), // 'drc', 'irc', 'doaa'
   decision: text("decision").notNull(), // 'approved', 'rejected'
   remarks: text("remarks").notNull(),
@@ -98,7 +102,7 @@ export const applicationReviews = pgTable("application_reviews", {
 // === RESEARCH PROGRESS ===
 export const researchProgress = pgTable("research_progress", {
   id: serial("id").primaryKey(),
-  scholarId: integer("scholar_id").notNull(),
+  scholarId: text("scholar_id").notNull(),
   completedReviews: integer("completed_reviews").default(0),
   pendingReports: integer("pending_reports").default(0),
   publications: integer("publications").default(0),

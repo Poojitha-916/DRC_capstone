@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
 import type { InsertApplication } from "@shared/schema";
 
-export function useApplications(scholarId?: number) {
+export function useApplications(scholarId?: string) {
   return useQuery({
     queryKey: [api.applications.list.path, scholarId],
     queryFn: async () => {

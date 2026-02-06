@@ -33,7 +33,7 @@ interface User {
 
 interface Application {
   id: number;
-  scholarId: number;
+  scholarId: string;
   type: string;
   status: string;
   currentStage: string;
@@ -45,7 +45,7 @@ interface Application {
 interface ApplicationReview {
   id: number;
   applicationId: number;
-  reviewerId: number;
+  reviewerId: string;
   stage: string;
   decision: string;
   remarks: string;
@@ -78,7 +78,8 @@ export default function Home() {
 }
 
 function LoginPage({ onLogin }: { onLogin: (user: User) => void }) {
-  const [username, setUsername] = useState("");
+  const [id, setId] = useState("");
+  const [idType, setIdType] = useState<"scholar" | "employee">("scholar");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,10 +90,14 @@ function LoginPage({ onLogin }: { onLogin: (user: User) => void }) {
     setIsSubmitting(true);
 
     try {
+      const body = idType === "scholar" 
+        ? { scholarId: id, password }
+        : { employeeId: id, password };
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify(body)
       });
 
       if (!res.ok) {
@@ -120,8 +125,22 @@ function LoginPage({ onLogin }: { onLogin: (user: User) => void }) {
           <h2 style={{ textAlign: "center", color: "#0b6a55", marginBottom: "30px" }}>Login to G-Scholar Hub</h2>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label>Username</label>
-              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" required data-testid="input-username" />
+              <label>Login Type</label>
+              <select value={idType} onChange={(e) => setIdType(e.target.value as "scholar" | "employee")} style={{ width: "100%", padding: "10px", borderRadius: "6px", border: "1px solid #ddd" }} data-testid="select-id-type">
+                <option value="scholar">Scholar</option>
+                <option value="employee">Employee</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>{idType === "scholar" ? "Scholar ID" : "Employee ID"}</label>
+              <input 
+                type="text" 
+                value={id} 
+                onChange={(e) => setId(e.target.value)} 
+                placeholder={idType === "scholar" ? "e.g., GITAM-SCH-2020-118" : "e.g., EMP-SUPERVISOR-001"} 
+                required 
+                data-testid="input-id" 
+              />
             </div>
             <div className="form-group">
               <label>Password</label>
@@ -135,12 +154,12 @@ function LoginPage({ onLogin }: { onLogin: (user: User) => void }) {
           <div style={{ marginTop: "30px", padding: "20px", background: "#f8f9fa", borderRadius: "8px" }}>
             <h4 style={{ color: "#0b6a55", marginBottom: "10px" }}>Demo Accounts</h4>
             <div style={{ fontSize: "13px", color: "#666" }}>
-              <div style={{ marginBottom: "5px" }}><strong>scholar1</strong> / password123 - Scholar</div>
-              <div style={{ marginBottom: "5px" }}><strong>scholar2</strong> / password123 - Scholar</div>
-              <div style={{ marginBottom: "5px" }}><strong>supervisor1</strong> / password123 - Supervisor</div>
-              <div style={{ marginBottom: "5px" }}><strong>drc1</strong> / password123 - DRC Member</div>
-              <div style={{ marginBottom: "5px" }}><strong>irc1</strong> / password123 - IRC Member</div>
-              <div><strong>doaa1</strong> / password123 - DoAA Officer</div>
+              <div style={{ marginBottom: "5px" }}><strong>GITAM-SCH-2020-118</strong> / password123 - Scholar</div>
+              <div style={{ marginBottom: "5px" }}><strong>GITAM-SCH-2021-204</strong> / password123 - Scholar</div>
+              <div style={{ marginBottom: "5px" }}><strong>EMP-SUPERVISOR-001</strong> / password123 - Supervisor</div>
+              <div style={{ marginBottom: "5px" }}><strong>EMP-DRC-001</strong> / password123 - DRC Member</div>
+              <div style={{ marginBottom: "5px" }}><strong>EMP-IRC-001</strong> / password123 - IRC Member</div>
+              <div><strong>EMP-DOAA-001</strong> / password123 - DoAA Officer</div>
             </div>
           </div>
         </div>
@@ -706,14 +725,14 @@ function ScholarApplications({ user }: { user: User }) {
   const queryClient = useQueryClient();
 
   const { data: applications = [], isLoading } = useQuery<Application[]>({
-    queryKey: ["/api/applications", { scholarId: user.id }],
-    queryFn: () => fetch(`/api/applications?scholarId=${user.id}`).then(res => res.json())
+    queryKey: ["/api/applications", { scholarId: user.scholarId }],
+    queryFn: () => fetch(`/api/applications?scholarId=${user.scholarId}`).then(res => res.json())
   });
 
   const submitMutation = useMutation({
     mutationFn: async (data: { type: string; details: Record<string, unknown> }) => {
       const res = await apiRequest("POST", "/api/applications", {
-        scholarId: user.id,
+        scholarId: user.scholarId,
         type: data.type,
         details: data.details
       });

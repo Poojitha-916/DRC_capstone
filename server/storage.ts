@@ -2,7 +2,7 @@ import { db } from "./db";
 import { 
   users, 
   scholars,
-  scholarSupervisors,
+  employees,
   racMembers,
   applications, 
   researchProgress, 
@@ -22,33 +22,34 @@ export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserWithScholar(id: number): Promise<(User & Partial<Scholar>) | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserWithScholarByUsername(
-    username: string,
-  ): Promise<(User & Partial<Scholar>) | undefined>;
+  getUserByScholarId(scholarId: string): Promise<(User & Partial<Scholar>) | undefined>;
+  getUserByEmployeeId(employeeId: string): Promise<(User & Partial<typeof employees.$inferSelect>) | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<InsertUser>): Promise<User>;
   
+  // Employees
+  getEmployee(employeeId: string): Promise<typeof employees.$inferSelect | undefined>;
+  createEmployee(emp: typeof employees.$inferInsert): Promise<typeof employees.$inferSelect>;
+  
   // Applications
-  getApplications(scholarId?: number): Promise<Application[]>;
+  getApplications(scholarId?: string): Promise<Application[]>;
   getApplicationById(id: number): Promise<Application | undefined>;
   getApplicationsByStage(stage: string): Promise<Application[]>;
-  getApplicationsForSupervisor(supervisorId: number): Promise<Application[]>;
+  getApplicationsForSupervisor(employeeId: string): Promise<Application[]>;
   createApplication(app: InsertApplication): Promise<Application>;
   updateApplication(id: number, updates: Partial<InsertApplication>): Promise<Application>;
   
   // Application Reviews
   getReviewsForApplication(applicationId: number): Promise<ApplicationReview[]>;
   createReview(review: InsertApplicationReview): Promise<ApplicationReview>;
-  isSupervisorForScholar(supervisorId: number, scholarId: number): Promise<boolean>;
-  createScholarSupervisor(scholarId: number, supervisorId: number): Promise<void>;
+  isSupervisorForScholar(employeeId: string, scholarId: string): Promise<boolean>;
   createScholarProfile(
     profile: typeof scholars.$inferInsert,
   ): Promise<typeof scholars.$inferSelect>;
   
   // Stats
-  getResearchProgress(scholarId: number): Promise<typeof researchProgress.$inferSelect | undefined>;
+  getResearchProgress(scholarId: string): Promise<typeof researchProgress.$inferSelect | undefined>;
   createResearchProgress(stats: typeof researchProgress.$inferInsert): Promise<typeof researchProgress.$inferSelect>;
 }
 
@@ -75,26 +76,36 @@ export class DatabaseStorage implements IStorage {
     return { ...scholarData, ...record.users };
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
-  }
-
-  async getUserWithScholarByUsername(
-    username: string,
+  async getUserByScholarId(
+    scholarId: string,
   ): Promise<(User & Partial<Scholar>) | undefined> {
     const [record] = await db
       .select()
       .from(users)
       .leftJoin(scholars, eq(scholars.userId, users.id))
-      .where(eq(users.username, username));
+      .where(eq(scholars.scholarId, scholarId));
 
     if (!record) {
       return undefined;
     }
 
-    const { id: _scholarRecordId, ...scholarData } = record.scholars ?? {};
-    return { ...scholarData, ...record.users };
+    return { ...record.scholars, ...record.users };
+  }
+
+  async getUserByEmployeeId(
+    employeeId: string,
+  ): Promise<(User & Partial<typeof employees.$inferSelect>) | undefined> {
+    const [record] = await db
+      .select()
+      .from(users)
+      .leftJoin(employees, eq(employees.userId, users.id))
+      .where(eq(employees.employeeId, employeeId));
+
+    if (!record) {
+      return undefined;
+    }
+
+    return { ...record.employees, ...record.users };
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -121,7 +132,17 @@ export class DatabaseStorage implements IStorage {
     return updatedUser;
   }
 
-  async getApplications(scholarId?: number): Promise<Application[]> {
+  async getEmployee(employeeId: string): Promise<typeof employees.$inferSelect | undefined> {
+    const [emp] = await db.select().from(employees).where(eq(employees.employeeId, employeeId));
+    return emp;
+  }
+
+  async createEmployee(emp: typeof employees.$inferInsert): Promise<typeof employees.$inferSelect> {
+    const [newEmp] = await db.insert(employees).values(emp).returning();
+    return newEmp;
+  }
+
+  async getApplications(scholarId?: string): Promise<Application[]> {
     if (scholarId) {
       return db.select().from(applications).where(eq(applications.scholarId, scholarId)).orderBy(desc(applications.submissionDate));
     }
@@ -139,24 +160,32 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(applications.submissionDate));
   }
 
-  async getApplicationsForSupervisor(supervisorId: number): Promise<Application[]> {
+  async getApplicationsForSupervisor(employeeId: string): Promise<Application[]> {
     const results = await db
       .select()
       .from(applications)
       .innerJoin(
-        scholarSupervisors,
-        eq(scholarSupervisors.scholarId, applications.scholarId),
+        scholars,
+        and(
+          eq(scholars.scholarId, applications.scholarId)
+        ),
       )
       .where(
         and(
           eq(applications.currentStage, "supervisor"),
           eq(applications.status, "Pending"),
-          eq(scholarSupervisors.supervisorId, supervisorId),
+          // Supervisor is either primary or co-supervisor
         ),
       )
       .orderBy(desc(applications.submissionDate));
 
-    return results.map((result) => result.applications);
+    // Filter for this specific supervisor
+    return results
+      .filter(result => 
+        result.scholars.supervisorId === employeeId || 
+        result.scholars.coSupervisorId === employeeId
+      )
+      .map((result) => result.applications);
   }
 
   async createApplication(app: InsertApplication): Promise<Application> {
@@ -180,26 +209,14 @@ export class DatabaseStorage implements IStorage {
     return newReview;
   }
 
-  async isSupervisorForScholar(supervisorId: number, scholarId: number): Promise<boolean> {
-    const [assignment] = await db
+  async isSupervisorForScholar(employeeId: string, scholarId: string): Promise<boolean> {
+    const [scholar] = await db
       .select()
-      .from(scholarSupervisors)
-      .where(
-        and(
-          eq(scholarSupervisors.supervisorId, supervisorId),
-          eq(scholarSupervisors.scholarId, scholarId),
-        ),
-      );
+      .from(scholars)
+      .where(eq(scholars.scholarId, scholarId));
 
-    return Boolean(assignment);
-  }
-
-  async createScholarSupervisor(scholarId: number, supervisorId: number): Promise<void> {
-    await db.insert(scholarSupervisors).values({
-      scholarId,
-      supervisorId,
-      isPrimary: true,
-    });
+    if (!scholar) return false;
+    return scholar.supervisorId === employeeId || scholar.coSupervisorId === employeeId;
   }
 
   async createScholarProfile(
@@ -209,7 +226,7 @@ export class DatabaseStorage implements IStorage {
     return newProfile;
   }
 
-  async getResearchProgress(scholarId: number): Promise<typeof researchProgress.$inferSelect | undefined> {
+  async getResearchProgress(scholarId: string): Promise<typeof researchProgress.$inferSelect | undefined> {
     const [stats] = await db.select().from(researchProgress).where(eq(researchProgress.scholarId, scholarId));
     return stats;
   }

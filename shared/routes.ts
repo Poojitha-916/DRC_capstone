@@ -25,7 +25,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/applications',
       input: z.object({
-        scholarId: z.coerce.number().optional(),
+        scholarId: z.coerce.string().optional(),
       }).optional(),
       responses: {
         200: z.array(insertApplicationSchema),
@@ -50,7 +50,7 @@ export const api = {
       method: 'POST' as const,
       path: '/api/applications/:id/review',
       input: z.object({
-        reviewerId: z.number(),
+        reviewerId: z.string(),
         decision: z.enum(['approved', 'rejected']),
         remarks: z.string().min(1),
       }),
