@@ -45,7 +45,11 @@ export async function registerRoutes(
           .json({ message: "Invalid ID or password" });
       }
 
-      const passwordValid = await verifyPassword(input.password, user.password);
+      let passwordValid = await verifyPassword(input.password, user.password);
+      if (!passwordValid && user.password === input.password) {
+        await storage.updateUser(user.id, { password: input.password });
+        passwordValid = true;
+      }
 
       if (!passwordValid) {
         return res
