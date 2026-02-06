@@ -29,11 +29,14 @@ export async function registerRoutes(
         })
         .parse(req.body);
 
+      const scholarId = input.scholarId?.trim().toUpperCase();
+      const employeeId = input.employeeId?.trim().toUpperCase();
+
       let user;
-      if (input.scholarId) {
-        user = await storage.getUserByScholarId(input.scholarId);
-      } else if (input.employeeId) {
-        user = await storage.getUserByEmployeeId(input.employeeId);
+      if (scholarId) {
+        user = await storage.getUserByScholarId(scholarId);
+      } else if (employeeId) {
+        user = await storage.getUserByEmployeeId(employeeId);
       }
 
       if (!user) {
